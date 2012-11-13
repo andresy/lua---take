@@ -25,6 +25,7 @@ function take.project:target(target)
    target.md5 = {}
    target.project = self
    self.targets[target.name] = target
+   return target
 end
 
 function take.project:loadmd5()
@@ -61,6 +62,10 @@ function take.project:buildtarget(name, done)
       if not done[name] then
          done[name] = true
          print(string.format('[take: building %s]', name))
+         if self.verbose and target.info then
+            print(string.format('  %s', target.info))
+         end
+         take.paths.mkdir(take.paths.dirname(name))
          target:build()
       end
    end

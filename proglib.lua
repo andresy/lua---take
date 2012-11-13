@@ -24,7 +24,7 @@ local function proglib(self, arg, shared)
             error(string.format('unable to process file <%s> (unknown language)', name))
          end
          self:target{name=take.paths.concat(take.dstdir, lang:outname(name)),
-                     deps=lang:deps(name),
+                     deps=take.table.imerge(lang:deps(name), arg.deps),
                      build=function(target)
                               lang:compile{src=name,
                                            dst=target.name,
@@ -36,14 +36,14 @@ local function proglib(self, arg, shared)
       end
    end
 
-   self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
-               deps=osrc,
-               build=function(target)
-                        self.link:compile{src=target.deps,
-                                          dst=target.name,
-                                          flags=arg.ldflags,
-                                          shared=shared}
-                     end}
+   return self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
+                      deps=osrc,
+                      build=function(target)
+                               self.link:compile{src=target.deps,
+                                                 dst=target.name,
+                                                 flags=arg.ldflags,
+                                                 shared=shared}
+                            end}
 end
 
 function take.project.library(self, arg)

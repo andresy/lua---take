@@ -89,9 +89,27 @@ function paths.concat(...)
 end
 
 function paths.mkdir(name)
-   if not os.execute(string.format('mkdir -p %s', name)) then
+   if not os.execute{cmd=string.format('mkdir -p %s', name), quiet=true} then
       error(string.format('unable to create directory <%s>', name))
    end
+end
+
+function paths.dirname(path)
+   if not path:match('^/') then
+      path = paths.cwd() .. '/' .. path
+   end
+   path = paths.reduce(paths.split(path))
+   table.remove(path)
+   path = paths.reduce(path)
+   return table.concat(path)
+end
+
+function paths.basename(path)
+   if not path:match('^/') then
+      path = paths.cwd() .. '/' .. path
+   end
+   path = paths.reduce(paths.split(path))
+   return table.remove(path)
 end
 
 return paths

@@ -13,11 +13,13 @@ function os.exists(filename)
    return false
 end
 
-function os.execute(cmd)
+function os.execute(arg)
+   arg = (type(arg) == 'string') and {cmd=arg} or arg
+   
    local tmpmsg = os.tmpname()
    local tmperr = os.tmpname()
 
-   cmd = string.format('%s > %s 2> %s', cmd, tmpmsg, tmperr)
+   local cmd = string.format('%s > %s 2> %s', arg.cmd, tmpmsg, tmperr)
    local success = _os.execute(cmd)
    if type(success) == 'number' then
       success = (success == 0)
@@ -39,6 +41,15 @@ function os.execute(cmd)
 
    os.remove(tmpmsg)
    os.remove(tmperr)
+
+   if not arg.quiet then
+      if msg:match('%S+') then
+         print(msg)
+      end
+      if not success then
+         error(err)
+      end
+   end
 
    return success, msg, err
 end

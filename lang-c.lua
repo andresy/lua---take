@@ -62,13 +62,13 @@ function lang:trycompile(arg)
    f:write(arg.code)
    f:close()
 
-   local success = self:compile{src = tmpname .. '.c',
-                                dst = tmpname .. '.o',
-                                flags = arg.flags,
-                                defines = arg.defines,
-                                includes = arg.includes,
-                                quiet = true}
-   
+   local success, msg, err = self:compile{src = tmpname .. '.c',
+                                          dst = tmpname .. '.o',
+                                          flags = arg.flags,
+                                          defines = arg.defines,
+                                          includes = arg.includes,
+                                          quiet = true}
+
    os.remove(tmpname .. '.c')
    os.remove(tmpname .. '.o')
    os.remove(tmpname)
@@ -76,6 +76,8 @@ function lang:trycompile(arg)
    if arg.info then
       print(success and 'passed]' or 'failed]')
    end
+
+   return success, msg, err
 end
 
 function lang:preprocess(arg)
@@ -93,12 +95,13 @@ function lang:preprocess(arg)
       io.write(string.format('[preprocessing: %s -- ', arg.info))
    end
 
-   local success, msg, err = take.os.execute(string.format('%s -E -P %s %s %s %s',
-                                                           self.compiler,
-                                                           tmpname .. '.c',
-                                                           flags,
-                                                           defines,
-                                                           includes))
+   local success, msg, err = take.os.execute{cmd=string.format('%s -E -P %s %s %s %s',
+                                                               self.compiler,
+                                                               tmpname .. '.c',
+                                                               flags,
+                                                               defines,
+                                                               includes),
+                                             quiet=true}
    
    os.remove(tmpname .. '.c')
    os.remove(tmpname)
@@ -135,7 +138,8 @@ function lang:compile(arg)
       print(string.format('  %s', cmd))
    end
 
-   local success, msg, err = take.os.execute(cmd)
+   local success, msg, err = take.os.execute{cmd=cmd,
+                                             quiet=true}
    
    if not arg.quiet then
       if success then

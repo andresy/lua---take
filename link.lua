@@ -1,8 +1,8 @@
-local utils = require 'take.utils'
+local take = package.loaded.take
 local lang = {}
 
 local function prepareflags(self, arg)
-   local flags = utils.table.imerge(arg.flags, self.flags, self.project.flags)
+   local flags = take.table.imerge(arg.flags, self.flags, self.project.flags)
    flags = table.concat(flags, ' ')
    return flags
 end
@@ -48,7 +48,7 @@ function lang:compile(arg)
    assert(arg.src, 'o source file(s) missing')
    local src = (type(arg.src) == 'string') and {arg.src} or arg.src
    for _,src in ipairs(src) do
-      assert(utils.os.exists(src), string.format('o file <%s> does not exists', src))
+      assert(take.os.exists(src), string.format('o file <%s> does not exists', src))
    end
    assert(arg.dst, 'destination file missing')
 
@@ -65,8 +65,9 @@ function lang:compile(arg)
       print(string.format('  %s', cmd))
    end
 
-   local success, msg, err = utils.os.execute(cmd)
-   
+   local success, msg, err = take.os.execute{cmd=cmd,
+                                             quiet=true}
+
    if not arg.quiet then
       if success then
          if self.project.verbose and msg:match('%S') then
