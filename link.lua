@@ -17,7 +17,7 @@ end
 
 function lang.new(project)
    assert(project, 'project expected')
-   local self = {project=project}
+   local self = {project=project, flags={}, includes={}, libraires={}}
    setmetatable(self, {__index=lang})
    if os.getenv('CC') then
       self.compiler = os.getenv('CC')
