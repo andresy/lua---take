@@ -3,7 +3,15 @@ local lang = {}
 
 local function prepareflags(self, arg)
    local flags = take.table.imerge(arg.flags, self.flags, self.project.flags)
-   flags = table.concat(flags, ' ')
+   local includes = take.table.imerge(arg.includes, self.includes, self.project.ldincludes)
+   local libraries = take.table.imerge(arg.libraries, self.libraries, self.project.libraries)
+   for i=1,#includes do
+      includes[i] = '-L' .. includes[i]
+   end
+   for i=1,#libraries do
+      libraries[i] = '-l' .. libraries[i]
+   end
+   flags = table.concat(take.table.imerge(flags, includes, libraries), ' ')
    return flags
 end
 
@@ -19,6 +27,22 @@ function lang.new(project)
       self.compiler = 'gcc'
    end
    return self
+end
+
+function lang:basename(str, shared)
+   str = take.paths.basename(str)
+   if shared then
+      if jit.os == 'Windows' then
+         str = str:match('(.*)%.dll$')
+      elseif jit.os == 'OSX' then
+         str = str:match('^lib(.*)%.dylib$')
+      else
+         str = str:match('^lib(.*)%.so$')
+      end
+      return str
+   else
+      return str
+   end
 end
 
 function lang:outname(str, shared)
