@@ -26,6 +26,7 @@ function take.project:target(target)
    target.md5 = {}
    target.project = self
    self.targets[target.name] = target
+   self:loadmd5(target)
    return target
 end
 
@@ -52,34 +53,47 @@ function take.project:savemd5(target)
 end
 
 function take.project:buildtarget(name, done)
-   local target = self.targets[name]
+   if done[name] then
+      return done[name]
+   end
 
-   take.paths.mkdir(take.paths.dirname(name))
-   self:loadmd5(target)
+   local target = self.targets[name]
 
    -- check if dependencies are up-to-date
    local changeddeps = (#target.deps == 0) -- always build if no deps
    for _,name in ipairs(target.deps) do
-      local md5 = take.md5.file(name)
-      if not md5 or md5 ~= target.md5[name] then
-         changeddeps = true
-         if self.targets[name] then -- file is a target?
-            self:buildtarget(name, done)
-         elseif not md5 then -- file does not exist?
+      if self.targets[name] then
+         local md5 = self:buildtarget(name, done)
+         if not md5 or md5 ~= target.md5[name] then
+            changeddeps = true
+         end
+      else
+         local md5 = take.md5.file(name)
+         if not md5 then
             error(string.format('no way to build <%s>', name))
+         elseif md5 ~= target.md5[name] then
+            changeddeps = true
          end
       end
    end
 
-   -- check if up-to-date
+   -- check if the target was never built
+   if not take.os.exists(name) then
+      changeddeps = true
+   end
+
+   -- build if necessary
    if changeddeps then
-      if not done[name] then
-         done[name] = true
-         print(string.format('[take: building %s]', name))
-         if self.verbose and target.info then
-            print(string.format('  %s', target.info))
-         end
-         target:build()
+      take.paths.mkdir(take.paths.dirname(name))
+      print(string.format('[take: building %s]', name))
+      if self.verbose and target.info then
+         print(string.format('  %s', target.info))
+      end
+      target:build()
+
+      -- check it was actually built
+      if not take.os.exists(name) then
+         error(string.format('target <%s> was not build', name))
       end
 
       -- update deps md5
@@ -89,10 +103,9 @@ function take.project:buildtarget(name, done)
       self:savemd5(target)
    end
 
-   if not take.os.exists(name) then
-      error(string.format('target <%s> was not build', name))
-   end
+   done[name] = take.md5.file(name)
 
+   return done[name]
 end
 
 function take.project:build(arg)
