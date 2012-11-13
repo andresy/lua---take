@@ -7,6 +7,7 @@ take.paths = require 'take.paths'
 take.table = require 'take.table'
 
 take.lang.c = require 'take.lang-c'
+take.lang.asm = require 'take.lang-s'
 take.link = require 'take.link'
 
 require 'take.proglib'
@@ -28,20 +29,33 @@ function take.project:target(target)
    return target
 end
 
-function take.project:loadmd5()
---    local f = io.open('takefiles/md5.txt')
---    if f then
---       local txt = txt:read('*all')
---       for name, md5 in txt:gmatch('([^\n]+)\n([^\n]+)\n') do
---          if not self.md5[name] then
---             self.md5[name] = md5
---          end
---       end
---    end
+function take.project:loadmd5(target)
+   if take.os.exists(target.name .. '.md5') then
+      local f = io.open(target.name .. '.md5')
+      if f then
+         local txt = f:read('*all')
+         f:close()
+         for name, md5 in txt:gmatch('(.-)\n(.-)\n') do
+            target.md5[name] = md5
+         end
+      end
+   end
+end
+
+function take.project:savemd5(target)
+   local f = io.open(target.name .. '.md5', 'w')
+   assert(f, string.format('could not open file <%s> for writing', target.name .. '.md5'))
+   for name, md5 in pairs(target.md5) do
+      f:write(string.format('%s\n%s\n', name, md5))
+   end
+   f:close()
 end
 
 function take.project:buildtarget(name, done)
    local target = self.targets[name]
+
+   take.paths.mkdir(take.paths.dirname(name))
+   self:loadmd5(target)
 
    -- check if dependencies are up-to-date
    local changeddeps = (#target.deps == 0) -- always build if no deps
@@ -65,14 +79,14 @@ function take.project:buildtarget(name, done)
          if self.verbose and target.info then
             print(string.format('  %s', target.info))
          end
-         take.paths.mkdir(take.paths.dirname(name))
          target:build()
       end
-   end
 
-   -- update deps md5
-   for _,name in ipairs(target.deps) do
-      target.md5[name] = take.md5.file(name)
+      -- update deps md5
+      for _,name in ipairs(target.deps) do
+         target.md5[name] = take.md5.file(name)
+      end
+      self:savemd5(target)
    end
 
    if not take.os.exists(name) then
