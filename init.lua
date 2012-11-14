@@ -24,11 +24,35 @@ function take.project:target(target)
       error(string.format('target <%s> already exists', target.name))
    end
    target.deps = target.deps or {}
+   target.needs = target.needs or {}
    target.md5 = {}
    target.project = self
    self.targets[target.name] = target
    self:loadmd5(target)
+
+   -- needs that are targets
+   local needdeps = {}
+   for _,need in ipairs(target.needs) do
+      if type(need) ~= 'function' then
+         assert(type(need) == 'string', 'needs must be a table of functions or target names')
+         assert(self.targets[need], string.format('needed <%s> is not a valid target', need))
+         assert(self.targets[need].supply, string.format('<%s> does not supply anything', need))
+         table.insert(needdeps, need)
+      end
+   end
+   target.deps = take.table.imerge(target.deps, needdeps)
+
    return target
+end
+
+function take.project.processneeds(self, target)
+   if target.needs then
+      assert(type(target.needs) == 'table', 'needs must be a table')
+      for _,needsupply in ipairs(target.needs) do
+         needsupply = (type(needsupply) == 'function') and needsupply or self.targets[needsupply].supply
+         needsupply(target)
+      end
+   end
 end
 
 function take.project:loadmd5(target)
@@ -90,6 +114,7 @@ function take.project:buildtarget(name, done)
       if self.verbose and target.info then
          print(string.format('  %s', target.info))
       end
+      self:processneeds(target)
       target:build()
 
       -- check it was actually built

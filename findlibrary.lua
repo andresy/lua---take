@@ -28,12 +28,12 @@ function take.project:findlibrary(arg)
       for _,path in ipairs(paths) do
          local libname = take.paths.concat(path, take.utils.basename2lib(name))
          if take.paths.exists(libname) then
-            return self:target{name=libname,
-                               provides=function(target, totarget, langname)
-                                           if langname == 'ld' then
-                                              totarget.libraries = take.table.imerge(totarget.libraries, {target.name})
-                                           end
-                                        end}
+            return {name=libname,
+                    supply=function(self)
+                              if self.lang == 'ld' then
+                                 self.libraries = take.table.imerge(self.libraries, {libname})
+                              end
+                           end}
          end
       end
    end

@@ -1,20 +1,5 @@
 local take = package.loaded.take
 
--- NOTE: we could apply needs on all deps, instead. check is this would be ok.
-
-function take.project.processneeds(self, target, ext)
-   if target.needs then
-      assert(type(target.needs) == 'table', 'needs must be a table')
-      for _,neededtarget in ipairs(target.needs) do
-         neededtarget = self.targets[neededtarget]
-         if neededtarget.provides then
-            assert(type(neededtarget.provides) == 'function', 'provides must be a function')
-            neededtarget:provides(target, ext)
-         end
-      end
-   end
-end
-
 local function proglib(self, arg, shared)
    assert(type(arg.name) == 'string', 'name missing')
    assert(type(arg.src) == 'string' or type(arg.src) == 'table', 'src missing')
@@ -39,12 +24,12 @@ local function proglib(self, arg, shared)
             error(string.format('unable to process file <%s> (unknown language)', name))
          end
          self:target{name=take.paths.concat(take.dstdir, lang:outname(name)),
-                     deps=take.table.imerge(lang:deps(name), arg.deps, arg.needs),
+                     deps=take.table.imerge(lang:deps(name), arg.deps),
+                     lang=ext,
                      needs=arg.needs,
                      includes=arg.includes,
                      defines=arg.defines,
                      build=function(target)
-                              self:processneeds(target)
                               lang:compile{src=name,
                                            dst=target.name,
                                            flags=arg[ext .. 'flags'],
@@ -55,28 +40,33 @@ local function proglib(self, arg, shared)
       end
    end
 
-   return self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
-                      deps=osrc,
-                      needs=arg.needs,
-                      flags=arg.ldflags,
-                      includes=arg.includes,
-                      libraries=arg.libraries,
-                      build=function(target)
-                               self:processneeds(target, 'ld')
-                               self.link:compile{src=target.deps,
-                                                 dst=target.name,
-                                                 flags=target.flags,
-                                                 includes=target.includes,
-                                                 libraries=target.libraries,
-                                                 shared=shared}
-                            end,
-                      provides=function(target, totarget, langname)
-                                  if langname == 'ld' then
-                                     totarget.libraries = take.table.imerge(totarget.libraries, {target.name})
-                                  else
-                                     totarget.includes = take.table.imerge(totarget.includes, arg.includes)
-                                  end
-                               end}
+   local target = self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
+                              deps=osrc,
+                              lang= shared and 'ld' or 'ldexe',
+                              needs=arg.needs,
+                              flags=arg.ldflags,
+                              includes=arg.includes, -- (1) first this is wrong (2) now that i use absolute paths for libraries this should be removed
+                              libraries=arg.libraries,
+                              build=function(target)
+                                       self.link:compile{src=target.deps,
+                                                         dst=target.name,
+                                                         flags=target.flags,
+                                                         includes=target.includes,
+                                                         libraries=target.libraries,
+                                                         shared=shared}
+                                    end}
+
+   if shared then
+      target.supply = function(self)
+                         if self.lang == 'ld' or self.lang == 'ldexe' then
+                            self.libraries = take.table.imerge(self.libraries, {target.name})
+                         else
+                            self.includes = take.table.imerge(self.includes, arg.includes)
+                         end
+                      end
+   end
+
+   return target
 end
 
 function take.project.library(self, arg)
