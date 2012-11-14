@@ -112,4 +112,31 @@ function paths.basename(path)
    return table.remove(path)
 end
 
+function paths.exists(filename)
+   local f = io.open(filename)
+   if f then
+      f:close()
+      return true
+   end
+   return false
+end
+
+ffi.cdef[[
+  int chdir(const char *path);
+]]
+
+function paths.chdir(path)
+   if ffi.C.chdir(path) ~= 0 then
+      error('unable to change directory')
+   end
+end
+
+function paths.isabsolute(path)
+   if path:match('^/') then
+      return true
+   else
+      return false
+   end
+end
+
 return paths

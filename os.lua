@@ -4,15 +4,6 @@ setmetatable(os, {__index=_os})
 
 local ffi = require 'ffi'
 
-function os.exists(filename)
-   local f = io.open(filename)
-   if f then
-      f:close()
-      return true
-   end
-   return false
-end
-
 function os.execute(arg)
    arg = (type(arg) == 'string') and {cmd=arg} or arg
    
@@ -52,16 +43,6 @@ function os.execute(arg)
    end
 
    return success, msg, err
-end
-
-ffi.cdef[[
-  int chdir(const char *path);
-]]
-
-function os.chdir(path)
-   if ffi.C.chdir(path) ~= 0 then
-      error('unable to change directory')
-   end
 end
 
 return os

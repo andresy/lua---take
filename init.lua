@@ -10,7 +10,9 @@ take.lang.c = require 'take.lang-c'
 take.lang.asm = require 'take.lang-s'
 take.link = require 'take.link'
 
+require 'take.utils'
 require 'take.proglib'
+require 'take.findlibrary'
 
 take.srcdir = '.'
 take.dstdir = take.paths.concat('takefiles')
@@ -22,7 +24,6 @@ function take.project:target(target)
       error(string.format('target <%s> already exists', target.name))
    end
    target.deps = target.deps or {}
-   target.build = target.build or function() end
    target.md5 = {}
    target.project = self
    self.targets[target.name] = target
@@ -31,7 +32,7 @@ function take.project:target(target)
 end
 
 function take.project:loadmd5(target)
-   if take.os.exists(target.name .. '.md5') then
+   if take.paths.exists(target.name .. '.md5') then
       local f = io.open(target.name .. '.md5')
       if f then
          local txt = f:read('*all')
@@ -78,12 +79,12 @@ function take.project:buildtarget(name, done)
    end
 
    -- check if the target was never built
-   if not take.os.exists(name) then
+   if not take.paths.exists(name) then
       changeddeps = true
    end
 
    -- build if necessary
-   if changeddeps then
+   if changeddeps and target.build then
       take.paths.mkdir(take.paths.dirname(name))
       print(string.format('[take: building %s]', name))
       if self.verbose and target.info then
@@ -92,7 +93,7 @@ function take.project:buildtarget(name, done)
       target:build()
 
       -- check it was actually built
-      if not take.os.exists(name) then
+      if not take.paths.exists(name) then
          error(string.format('target <%s> was not build', name))
       end
 
@@ -103,7 +104,11 @@ function take.project:buildtarget(name, done)
       self:savemd5(target)
    end
 
-   done[name] = take.md5.file(name)
+   if target.build then
+      done[name] = take.md5.file(name)
+   else
+      done[name] = true
+   end
 
    return done[name]
 end
@@ -138,8 +143,12 @@ end
 
 function take.project:clean()
    for name,target in pairs(self.targets) do
-      print(string.format('[removing %s]', name))
-      os.remove(name)
+      if target.build then
+         print(string.format('[removing %s]', name))
+         os.remove(name)
+         print(string.format('[removing %s]', name .. '.md5'))
+         os.remove(name .. '.md5')
+      end
    end
 end
 

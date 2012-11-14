@@ -9,7 +9,9 @@ local function prepareflags(self, arg)
       includes[i] = '-L' .. includes[i]
    end
    for i=1,#libraries do
-      libraries[i] = '-l' .. libraries[i]
+      if not take.paths.isabsolute(libraries[i]) then
+         libraries[i] = '-l' .. libraries[i]
+      end
    end
    flags = table.concat(take.table.imerge(flags, includes, libraries), ' ')
    return flags
@@ -72,7 +74,7 @@ function lang:compile(arg)
    assert(arg.src, 'o source file(s) missing')
    local src = (type(arg.src) == 'string') and {arg.src} or arg.src
    for _,src in ipairs(src) do
-      assert(take.os.exists(src), string.format('o file <%s> does not exists', src))
+      assert(take.paths.exists(src), string.format('o file <%s> does not exists', src))
    end
    assert(arg.dst, 'destination file missing')
 

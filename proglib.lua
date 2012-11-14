@@ -72,8 +72,7 @@ local function proglib(self, arg, shared)
                             end,
                       provides=function(target, totarget, langname)
                                   if langname == 'ld' then
-                                     totarget.includes = take.table.imerge(totarget.includes, {take.paths.dirname(target.name)})
-                                     totarget.libraries = take.table.imerge(totarget.libraries, {self.link:basename(target.name, shared)})
+                                     totarget.libraries = take.table.imerge(totarget.libraries, {target.name})
                                   else
                                      totarget.includes = take.table.imerge(totarget.includes, arg.includes)
                                   end

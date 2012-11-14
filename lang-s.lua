@@ -110,7 +110,7 @@ end
 -- bon, je peux le creer pour chaque projet, en fait --> self.proj
 function lang:compile(arg)
    assert(arg.src, 'c source file missing')
-   assert(take.os.exists(arg.src), 'c source file does not exists')
+   assert(take.paths.exists(arg.src), 'c source file does not exists')
    assert(arg.dst, 'o destination file missing')
 
    local defines, flags, includes = prepareflags(self, arg)
