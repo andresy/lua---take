@@ -31,6 +31,10 @@ function lang.new(project)
    return self
 end
 
+function lang.sharedflagssupply(target)
+   target.flags = take.table.imerge(target.flags, {'-fPIC'})
+end
+
 function lang:basename(str, shared)
    str = take.paths.basename(str)
    if shared then

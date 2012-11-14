@@ -23,16 +23,21 @@ local function proglib(self, arg, shared)
          if not lang then
             error(string.format('unable to process file <%s> (unknown language)', name))
          end
+         local needs = arg.needs
+         if shared and lang.sharedflagssupply then -- should be called ld? what about ldexeflagssupply?
+            needs = take.table.imerge(arg.needs, {lang.sharedflagssupply})
+         end
          self:target{name=take.paths.concat(take.dstdir, lang:outname(name)),
                      deps=take.table.imerge(lang:deps(name), arg.deps),
                      lang=ext,
-                     needs=arg.needs,
+                     flags=arg[ext .. 'flags'],
+                     needs=needs,
                      includes=arg.includes,
                      defines=arg.defines,
                      build=function(target)
                               lang:compile{src=name,
                                            dst=target.name,
-                                           flags=arg[ext .. 'flags'],
+                                           flags=target.flags,
                                            includes=target.includes,
                                            defines=target.defines}
                            end}
@@ -40,10 +45,15 @@ local function proglib(self, arg, shared)
       end
    end
 
+   local needs = arg.needs
+   if shared and self.link.sharedflagssupply then -- should be called ld? what about ldexeflagssupply?
+      needs = take.table.imerge(arg.needs, {self.link.sharedflagssupply})
+   end
+
    local target = self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
                               deps=osrc,
                               lang= shared and 'ld' or 'ldexe',
-                              needs=arg.needs,
+                              needs=needs,
                               flags=arg.ldflags,
                               includes=arg.includes, -- (1) first this is wrong (2) now that i use absolute paths for libraries this should be removed
                               libraries=arg.libraries,

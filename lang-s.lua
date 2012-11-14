@@ -26,7 +26,6 @@ function lang.new(project)
    return self
 end
 
--- by default, output in takefiles/
 function lang:outname(str)
    str = str:gsub('[^%.]+$', 'o')
    return str

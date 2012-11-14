@@ -37,7 +37,10 @@ function lang.new(project)
    return self
 end
 
--- by default, output in takefiles/
+function lang.sharedflagssupply(target)
+   target.flags = take.table.imerge(target.flags, {'-fPIC'})
+end
+
 function lang:outname(str)
    str = str:gsub('[^%.]+$', 'o')
    return str
