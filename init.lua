@@ -14,6 +14,7 @@ require 'take.utils'
 require 'take.proglib'
 require 'take.findlibrary'
 require 'take.install'
+require 'take.cmdline'
 
 take.srcdir = '.'
 take.dstdir = take.paths.concat('takefiles')
