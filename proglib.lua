@@ -50,13 +50,19 @@ local function proglib(self, arg, shared)
       needs = take.table.imerge(arg.needs, {self.link.sharedflagssupply})
    end
 
+   local flags
+   if shared then
+      flags = arg.libflags
+   else
+      flags = arg.exeflags
+   end
    local target = self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
                               deps=osrc,
                               default=arg.default,
-                              lang= shared and 'ld' or 'ldexe',
+                              lang= shared and 'lib' or 'exe',
                               needs=needs,
-                              flags=arg.ldflags,
-                              includes=arg.includes, -- (1) first this is wrong (2) now that i use absolute paths for libraries this should be removed
+                              flags=flags,
+                              includes=arg.libincludes, -- now that i use absolute paths for libraries this should probably be removed
                               libraries=arg.libraries,
                               build=function(target)
                                        self.link:compile{src=target.deps,
@@ -69,7 +75,7 @@ local function proglib(self, arg, shared)
 
    if shared then
       target.supply = function(self)
-                         if self.lang == 'ld' or self.lang == 'ldexe' then
+                         if self.lang == 'lib' or self.lang == 'exe' then
                             self.libraries = take.table.imerge(self.libraries, {target.name})
                          else
                             self.includes = take.table.imerge(self.includes, arg.includes)
@@ -84,7 +90,7 @@ function take.project.library(self, arg)
    return proglib(self, arg, true)
 end
 
-function take.project.program(self, arg)
+function take.project.executable(self, arg)
    return proglib(self, arg)
 end
 

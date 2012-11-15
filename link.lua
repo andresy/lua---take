@@ -3,7 +3,7 @@ local lang = {}
 
 local function prepareflags(self, arg)
    local flags = take.table.imerge(arg.flags, self.flags, self.project.flags)
-   local includes = take.table.imerge(arg.includes, self.includes, self.project.ldincludes)
+   local includes = take.table.imerge(arg.includes, self.includes, self.project.libincludes)
    local libraries = take.table.imerge(arg.libraries, self.libraries, self.project.libraries)
    for i=1,#includes do
       includes[i] = '-L' .. includes[i]

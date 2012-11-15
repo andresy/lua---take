@@ -30,7 +30,7 @@ function take.project:findlibrary(arg)
          if take.paths.exists(libname) then
             return {name=libname,
                     supply=function(self)
-                              if self.lang == 'ld' or self.lang == 'ldexe' then
+                              if self.lang == 'lib' or self.lang == 'exe' then
                                  self.libraries = take.table.imerge(self.libraries, {libname})
                               end
                            end}

@@ -43,7 +43,7 @@ function take.project:install(arg)
    end
 
    if self.targets.install then
-      self.targets.install.deps = take.table.imerge(self.targets.install.deps, src)
+      self.targets.install.deps = take.table.imerge(self.targets.install.deps, targets)
    else
       self:target{name='install',
                   deps=targets}
