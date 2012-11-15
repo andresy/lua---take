@@ -84,9 +84,18 @@ function lang:compile(arg)
 
    local flags = prepareflags(self, arg)
 
+   local sharedflags = ''
+   if arg.shared then
+      if jit.os == 'OSX' then
+         sharedflags = string.format('-dynamiclib -single_module -undefined dynamic_lookup -install_name %s', take.paths.basename(arg.dst))
+      else
+         sharedflags = string.format('-shared -Wl,-soname,%s', take.paths.basename(arg.dst))
+      end
+   end
+
    local cmd = string.format('%s %s -o %s %s %s',
                              self.compiler,
-                             arg.shared and '-shared' or '',
+                             sharedflags,
                              arg.dst,
                              table.concat(src, ' '),
                              flags)
