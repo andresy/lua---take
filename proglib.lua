@@ -52,6 +52,7 @@ local function proglib(self, arg, shared)
 
    local target = self:target{name=take.paths.concat(take.dstdir, self.link:outname(arg.name, shared)),
                               deps=osrc,
+                              default=arg.default,
                               lang= shared and 'ld' or 'ldexe',
                               needs=needs,
                               flags=arg.ldflags,

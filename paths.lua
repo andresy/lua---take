@@ -139,4 +139,25 @@ function paths.isabsolute(path)
    end
 end
 
+function paths.rootdir()
+   return '/'
+end
+
+function paths.relative(root, path)
+   local root = paths.split(paths.concat(root))
+   local path = paths.split(paths.concat(path))
+
+   while root[1] and root[1] == path[1] do
+      table.remove(root, 1)
+      table.remove(path, 1)
+   end
+
+   while root[1] do
+      table.remove(root, 1)
+      table.insert(path, 1, '../')
+   end
+
+   return table.concat(paths.reduce(path))
+end
+
 return paths

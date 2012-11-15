@@ -13,9 +13,12 @@ take.link = require 'take.link'
 require 'take.utils'
 require 'take.proglib'
 require 'take.findlibrary'
+require 'take.install'
 
 take.srcdir = '.'
 take.dstdir = take.paths.concat('takefiles')
+take.installdir = '/usr/local'
+
 take.paths.mkdir(take.dstdir)
 
 function take.project:target(target)
@@ -56,8 +59,9 @@ function take.project.processneeds(self, target)
 end
 
 function take.project:loadmd5(target)
-   if take.paths.exists(target.name .. '.md5') then
-      local f = io.open(target.name .. '.md5')
+   local md5file = target.md5file or (target.name .. '.md5')
+   if take.paths.exists(md5file) then
+      local f = io.open(md5file)
       if f then
          local txt = f:read('*all')
          f:close()
@@ -69,8 +73,10 @@ function take.project:loadmd5(target)
 end
 
 function take.project:savemd5(target)
-   local f = io.open(target.name .. '.md5', 'w')
-   assert(f, string.format('could not open file <%s> for writing', target.name .. '.md5'))
+   local md5file = target.md5file or (target.name .. '.md5')
+   take.paths.mkdir(take.paths.dirname(md5file))
+   local f = io.open(md5file, 'w')
+   assert(f, string.format('could not open file <%s> for writing', md5file))
    for name, md5 in pairs(target.md5) do
       f:write(string.format('%s\n%s\n', name, md5))
    end
@@ -141,8 +147,10 @@ end
 function take.project:build(arg)
    if not arg then
       arg = {}
-      for name,_ in pairs(self.targets) do
-         table.insert(arg, name)
+      for name,target in pairs(self.targets) do
+         if target.default then
+            table.insert(arg, name)
+         end
       end
    end
    if type(arg) == 'string' then
