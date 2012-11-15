@@ -1,6 +1,10 @@
 local take = package.loaded.take
 
 function take.project:install(arg)
+   if not arg then
+      return self:build('install')
+   end
+
    assert(arg.src, 'missing src files')
    assert(arg.dst, 'missing dst path')
    assert(type(arg.src) == 'string' or type(arg.src) == 'table', 'src must be a string or a table of string')
