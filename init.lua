@@ -177,11 +177,24 @@ end
 
 function take.project:clean()
    for name,target in pairs(self.targets) do
-      if target.build then
+      if target.build and not target.install then
          print(string.format('[removing %s]', name))
          os.remove(name)
-         print(string.format('[removing %s]', name .. '.md5'))
-         os.remove(name .. '.md5')
+         local md5file = target.md5file or (target.name .. '.md5')
+         print(string.format('[removing %s]', md5file))
+         os.remove(md5file)
+      end
+   end
+end
+
+function take.project:uninstall()
+   for name,target in pairs(self.targets) do
+      if target.build and target.install then
+         print(string.format('[removing %s]', name))
+         os.remove(name)
+         local md5file = target.md5file or (target.name .. '.md5')
+         print(string.format('[removing %s]', md5file))
+         os.remove(md5file)
       end
    end
 end

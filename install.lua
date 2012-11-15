@@ -27,6 +27,7 @@ function take.project:install(arg)
       table.insert(targets, 
                    self:target{name=installname,
                                deps={name},
+                               install=true,
                                md5file=take.paths.concat(take.dstdir, 'install',
                                                          take.paths.relative(take.paths.rootdir(), installname)) .. '.md5',
                                build=function(target)
